@@ -9,11 +9,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          # We need full history to be able to list commits between two refs.
+          fetch-depth: 0
 
       - name: Check for Merge Commits
         run: |
           set -eu
-          MERGE_COMMITS=$(git log --full-history --merges --pretty=oneline '${{ github.base_ref }}..${{ github.head_ref }}')
+          MERGE_COMMITS=$(git log --full-history --merges --pretty=oneline 'origin/${{ github.base_ref }}..origin/${{ github.head_ref }}')
+          # This will be empty if the base ref is not a parent of the head ref.
+          # This is fine as GitHub will mark the PR as out-of-date.
           if [ "$MERGE_COMMITS" != "" ]
           then
               exit 1
