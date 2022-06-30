@@ -1,0 +1,28 @@
+name: Pull Request Audit
+on:
+  pull_request_target
+jobs:
+  no_merge_commits:
+    name: "Forbid Merge Commits in PR"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for Merge Commits
+        run: |
+          set -eu
+          MERGE_COMMITS=$(git log --full-history --merges --pretty=oneline '${{ github.base_ref }}..${{ github.head_ref }}')
+          if [ "$MERGE_COMMITS" != "" ]
+          then
+              exit 1
+          fi
+      - name: Add PR Comment
+        if: ${{ failure() }}
+        uses: actions/github-script@v2
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            github.issues.createComment({
+              issue_number: ${{ github.event.number }},
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: ':error: This PR contains merge commits. Please rebase.'
+            })
