@@ -13,6 +13,12 @@ jobs:
           # We need full history to be able to list commits between two refs.
           fetch-depth: 0
 
+      - name: Hide Old PR Comments
+        uses: int128/hide-comment-action@v1
+        with:
+          ends-with: |
+            <!-- forbid_merge_commits_notification -->
+
       - name: Check for Merge Commits
         run: |
           set -eu
@@ -26,13 +32,13 @@ jobs:
 
       - name: Add PR Comment
         if: ${{ failure() }}
-        uses: actions/github-script@v2
+        uses: actions/github-script@v6
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            github.issues.createComment({
+            github.rest.issues.createComment({
               issue_number: ${{ github.event.number }},
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: ':warning: This PR contains merge commits. Rebase it onto "${{ github.base_ref }}" and remove the merge commits.'
+              body: ':warning: This PR contains merge commits. Rebase it onto "${{ github.base_ref }}" and remove the merge commits.<!-- forbid_merge_commits_notification -->'
             })
