@@ -1,11 +1,15 @@
 name: Pull Request Audit
 on:
   pull_request_target
+
 jobs:
-  no_merge_commits:
-    name: "Forbid Merge Commits in PR"
+  forbid_merge_commits:
+    name: Forbid Merge Commits
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
       - name: Check for Merge Commits
         run: |
           set -eu
@@ -14,6 +18,7 @@ jobs:
           then
               exit 1
           fi
+
       - name: Add PR Comment
         if: ${{ failure() }}
         uses: actions/github-script@v2
@@ -24,5 +29,5 @@ jobs:
               issue_number: ${{ github.event.number }},
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: ':error: This PR contains merge commits. Please rebase.'
+              body: ':warning: This PR contains merge commits. Rebase it onto "${{ github.base_ref }}" and remove the merge commits.'
             })
